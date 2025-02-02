@@ -1,87 +1,108 @@
-from telegram import Update, ParseMode, InlineKeyboardButton, InlineKeyboardMarkup
-from datetime import datetime
-import humanize
-from .database import Opportunity
+from telegram import ParseMode, InputMediaPhoto
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+import io
+from .database import db, Opportunity, Stock
 
 class NotificationManager:
-    def send_new_opportunity(self, chat_id, opportunity):
-        message = self._format_opportunity_message(opportunity)
-        keyboard = self._generate_opportunity_keyboard(opportunity.id)
-        self.send_message(
-            chat_id=chat_id,
-            text=message,
-            reply_markup=keyboard,
-            parse_mode='HTML'
-        )
-
-    def send_goal_alert(self, chat_id, opportunity):
-        message = f"🎉 <b>تم تحقيق الهدف {opportunity.current_target}</b>\n\n"
-        message += f"📈 السهم: {opportunity.symbol}\n"
-        message += f"📊 الاستراتيجية: {self._get_strategy_name(opportunity.strategy)}\n"
-        message += f"💰 السعر الحالي: {self._get_current_price(opportunity.symbol):.2f}"
+    def generate_weekly_report(self):
+        # حساب تواريخ الأسبوع
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=7)
         
-        keyboard = InlineKeyboardMarkup([[
-            InlineKeyboardButton("عرض التفاصيل 🔍", callback_data=f"view_details:{opportunity.id}"),
-            InlineKeyboardButton("إغلاق ❌", callback_data=f"close_opportunity:{opportunity.id}")
-        ]])
+        # جلب البيانات
+        opportunities = db.session.query(Opportunity).filter(
+            Opportunity.entry_date.between(start_date, end_date)
+        ).all()
         
-        self.send_message(
-            chat_id=chat_id,
-            text=message,
-            reply_markup=keyboard,
-            parse_mode='HTML'
-        )
-
-    def send_strategy_update(self, chat_id, strategy):
-        message = f"🔄 <b>تم تحديث الاستراتيجية:</b> {strategy.name}\n"
-        message += f"⚙️ الحالة: {'مفعّلة ✅' if strategy.is_active else 'معطلة ❌'}\n"
-        message += f"📆 آخر تحديث: {humanize.naturaltime(datetime.now())}"
+        stocks = {s.symbol: s.name for s in db.session.query(Stock).all()}
         
-        self.send_message(
-            chat_id=chat_id,
-            text=message,
-            parse_mode='HTML'
-        )
-
-    def send_stock_analysis(self, chat_id, symbol, analysis):
-        message = f"<b>تحليل فني لـ {symbol}</b> 📊\n\n"
-        message += f"📈 الاتجاه: {analysis['trend']}\n"
-        message += f"📊 RSI: {analysis['rsi']:.2f}\n"
-        message += f"🎯 مستويات فيبوناتشي:\n"
-        for level, price in analysis['fibonacci'].items():
-            message += f" - {level}: {price:.2f}\n"
+        # تجميع البيانات
+        report_data = {
+            'total_opportunities': len(opportunities),
+            'completed': [],
+            'active': [],
+            'total_profit': 0,
+            'best_performers': [],
+            'worst_performers': []
+        }
         
-        self.send_message(
-            chat_id=chat_id,
-            text=message,
-            parse_mode='HTML'
-        )
+        for opp in opportunities:
+            # حساب الربح الحالي
+            current_profit = self._calculate_current_profit(opp)
+            
+            # تجميع البيانات العامة
+            if opp.status == 'completed':
+                report_data['total_profit'] += current_profit
+                report_data['completed'].append(opp)
+            elif opp.status == 'active':
+                report_data['active'].append(opp)
+            
+            # تصنيف أفضل وأسوأ الفرص
+            self._classify_performance(opp, current_profit, report_data, stocks)
+        
+        # توليد التقرير
+        return self._format_report(report_data, stocks)
 
-    def _format_opportunity_message(self, opportunity):
-        message = f"⭐️ <b>فرصة جديدة!</b> ⭐️\n\n"
-        message += f"📈 السهم: {opportunity.symbol}\n"
-        message += f"📊 الاستراتيجية: {self._get_strategy_name(opportunity.strategy)}\n"
-        message += f"💰 سعر الدخول: {opportunity.entry_price:.2f}\n"
-        message += f"🎯 الأهداف:\n"
-        for idx, target in opportunity.targets.items():
-            message += f"{idx}. {target:.2f}\n"
-        message += f"🛑 وقف الخسارة: {opportunity.stop_loss:.2f}"
-        return message
+    def _calculate_current_profit(self, opportunity):
+        if opportunity.status == 'completed':
+            exit_price = opportunity.achieved_targets[-1]['price']
+        else:
+            exit_price = db.session.query(StockDailyPerformance.close_price).filter(
+                StockDailyPerformance.symbol == opportunity.symbol
+            ).order_by(StockDailyPerformance.date.desc()).first()[0]
+        
+        return ((exit_price - opportunity.entry_price) / opportunity.entry_price) * 100
 
-    def _generate_opportunity_keyboard(self, opportunity_id):
-        return InlineKeyboardMarkup([[
-            InlineKeyboardButton("متابعة الأهداف 🔔", callback_data=f"track:{opportunity_id}"),
-            InlineKeyboardButton("تجاهل ❌", callback_data=f"ignore:{opportunity_id}")
-        ]])
+    def _classify_performance(self, opp, profit, report_data, stocks):
+        entry = {
+            'symbol': opp.symbol,
+            'name': stocks.get(opp.symbol, 'غير معروف'),
+            'strategy': opp.strategy,
+            'profit': round(profit, 2),
+            'duration': (datetime.now().date() - opp.entry_date).days
+        }
+        
+        if len(report_data['best_performers']) < 5 or profit > report_data['best_performers'][-1]['profit']:
+            report_data['best_performers'].append(entry)
+            report_data['best_performers'].sort(key=lambda x: x['profit'], reverse=True)
+            report_data['best_performers'] = report_data['best_performers'][:5]
+            
+        if len(report_data['worst_performers']) < 5 or profit < report_data['worst_performers'][-1]['profit']:
+            report_data['worst_performers'].append(entry)
+            report_data['worst_performers'].sort(key=lambda x: x['profit'])
+            report_data['worst_performers'] = report_data['worst_performers'][:5]
 
-    def send_message(self, chat_id, text, **kwargs):
-        # تنفيذ إرسال الرسالة الفعلي هنا
-        pass
+    def _format_report(self, data, stocks):
+        report = "📊 <b>التقرير الأسبوعي الشامل</b>\n\n"
+        report += f"📅 الفترة من {data['start_date']} إلى {data['end_date']}\n\n"
+        
+        report += "📈 <b>ملخص الأداء:</b>\n"
+        report += f"- عدد الفرص المطروحة: {data['total_opportunities']}\n"
+        report += f"- الفرص المكتملة: {len(data['completed'])}\n"
+        report += f"- الفرص النشطة: {len(data['active'])}\n"
+        report += f"- إجمالي الربح: {data['total_profit']:.2f}%\n\n"
+        
+        report += "🏆 <b>أفضل 5 أداء:</b>\n"
+        for idx, opp in enumerate(data['best_performers'], 1):
+            report += f"{idx}. {opp['name']} ({opp['symbol']})\n"
+            report += f"   الاستراتيجية: {opp['strategy']}\n"
+            report += f"   الربح: {opp['profit']}% خلال {opp['duration']} يوم\n\n"
+        
+        report += "📉 <b>أدنى 5 أداء:</b>\n"
+        for idx, opp in enumerate(data['worst_performers'], 1):
+            report += f"{idx}. {opp['name']} ({opp['symbol']})\n"
+            report += f"   الاستراتيجية: {opp['strategy']}\n"
+            report += f"   الربح: {opp['profit']}% خلال {opp['duration']} يوم\n\n"
+        
+        report += "📌 <b>الفرص النشطة:</b>\n"
+        for opp in data['active']:
+            current_target = opp.targets[f'target{opp.current_target}']
+            report += f"- {stocks[opp.symbol]} ({opp.symbol}): الهدف {opp.current_target} ({current_target:.2f})\n"
+        
+        return report
 
-    def _get_strategy_name(self, strategy_id):
-        # استرجاع اسم الاستراتيجية من قاعدة البيانات
-        pass
-
-    def _get_current_price(self, symbol):
-        # استرجاع السعر الحالي من مصدر البيانات
-        pass
+    def send_report(self, chat_id, report):
+        self._send_message(chat_id, report, parse_mode=ParseMode.HTML)
