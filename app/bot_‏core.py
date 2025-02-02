@@ -8,11 +8,11 @@ from telegram.ext import (
     MessageHandler,
     Filters,
     CallbackContext,
-    JobQueue
+    CallbackQueryHandler,
+    ConversationHandler
 )
 from apscheduler.schedulers.background import BackgroundScheduler
-from .database import db, GroupSettings
-from .market_data import SaudiMarketData
+from .database import db, Group, PendingGroup, PrivateMessage
 from .notifications import NotificationManager
 
 logging.basicConfig(
@@ -20,6 +20,109 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+# Configuration
+OWNER_ID = os.getenv('OWNER_ID')
+SUBSCRIPTION_CHANNEL = "@trend_600"
+REMINDER_INTERVAL = 3  # أيام
+
+class StockBot:
+    def __init__(self):
+        self.token = os.getenv('TELEGRAM_TOKEN')
+        self.updater = Updater(self.token, use_context=True)
+        self.scheduler = BackgroundScheduler()
+        self.notifier = NotificationManager()
+        
+        self._setup_handlers()
+        self._schedule_jobs()
+        
+    def _setup_handlers(self):
+        dp = self.updater.dispatcher
+        dp.add_handler(MessageHandler(Filters.status_update.new_chat_members, self.handle_new_group))
+        dp.add_handler(MessageHandler(Filters.private, self.handle_private_message))
+        dp.add_handler(CallbackQueryHandler(self.handle_button_click))
+
+    def _schedule_jobs(self):
+        self.scheduler.add_job(
+            self.send_activation_reminders,
+            'interval',
+            days=REMINDER_INTERVAL,
+            start_date=datetime.now() + timedelta(seconds=10)
+        )
+        self.scheduler.start()
+
+    def handle_new_group(self, update: Update, context: CallbackContext):
+        new_members = update.message.new_chat_members
+        if any([member.id == context.bot.id for member in new_members]):
+            chat = update.effective_chat
+            self._register_pending_group(chat)
+            self._send_activation_message(chat.id)
+
+    def _register_pending_group(self, chat):
+        existing = db.session.query(PendingGroup).filter_by(chat_id=str(chat.id)).first()
+        if not existing:
+            new_group = PendingGroup(
+                chat_id=str(chat.id),
+                title=chat.title,
+                admin_username=chat.effective_user.username
+            )
+            db.session.add(new_group)
+            db.session.commit()
+
+    def _send_activation_message(self, chat_id):
+        keyboard = [[
+            InlineKeyboardButton("✨ اشترك الآن", url=f"https://t.me/{SUBSCRIPTION_CHANNEL}"),
+            InlineKeyboardButton("📩 تواصل مع المالك", url=f"https://t.me/{SUBSCRIPTION_CHANNEL}")
+        ]]
+        
+        message = self.notifier.group_activation_message()
+        self.updater.bot.send_message(
+            chat_id=chat_id,
+            text=message,
+            parse_mode='Markdown',
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+    def send_activation_reminders(self):
+        pending_groups = db.session.query(PendingGroup).all()
+        for group in pending_groups:
+            self._send_activation_message(group.chat_id)
+
+    def handle_private_message(self, update: Update, context: CallbackContext):
+        user = update.effective_user
+        if str(user.id) != OWNER_ID:
+            self._handle_non_owner_message(user.id)
+        else:
+            self._handle_owner_message(update.message)
+
+    def _handle_non_owner_message(self, user_id):
+        self._log_private_message(user_id)
+        response = self.notifier.private_message_response()
+        self.updater.bot.send_message(
+            chat_id=user_id,
+            text=response,
+            parse_mode='Markdown'
+        )
+
+    def _log_private_message(self, user_id):
+        record = db.session.query(PrivateMessage).filter_by(user_id=str(user_id)).first()
+        if record:
+            record.message_count += 1
+            record.last_message = datetime.now()
+        else:
+            new_record = PrivateMessage(
+                user_id=str(user_id),
+                message_count=1,
+                last_message=datetime.now()
+            )
+            db.session.add(new_record)
+        db.session.commit()
+
+    def handle_button_click(self, update: Update, context: CallbackContext):
+        query = update.callback_query
+        query.answer()
+        # يمكن إضافة منطق الأزرار هنا
+
 
 class StockBot:
     def __init__(self):
