@@ -23,3 +23,12 @@ class Opportunity(Base):
     stop_loss = Column(Float)
 
 Base.metadata.create_all(engine)
+# أضف هذا النموذج الجديد
+class StrategyConfigDB(Base):
+    __tablename__ = 'strategy_configs'
+    id = Column(Integer, primary_key=True)
+    strategy_id = Column(String(50), unique=True)
+    name = Column(String(100))
+    parameters = Column(JSON)
+    is_active = Column(Boolean, default=True)
+    notification_channels = Column(JSON)
