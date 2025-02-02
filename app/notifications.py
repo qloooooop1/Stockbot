@@ -5,6 +5,39 @@ import numpy as np
 from datetime import datetime, timedelta
 import io
 from .database import db, Opportunity, Stock
+from telegram import ParseMode
+from datetime import datetime
+
+class NotificationManager:
+    @staticmethod
+    def send_renewal_request(owner_id, chat_id, group_title):
+        message = (
+            "🔔 **طلب تجديد اشتراك**\n\n"
+            f"📌 المجموعة: {group_title}\n"
+            f"🆔 الآيدي: `{chat_id}`\n\n"
+            "الرجاء إدخال عدد الأيام الجديدة:"
+        )
+        
+        return {
+            'chat_id': owner_id,
+            'text': message,
+            'parse_mode': ParseMode.MARKDOWN
+        }
+
+    @staticmethod
+    def send_subscription_details(chat_id, days_left, end_date):
+        message = (
+            "📅 **معلومات الاشتراك**\n\n"
+            f"⏳ الأيام المتبقية: {days_left}\n"
+            f"📅 تاريخ الانتهاء: {end_date.strftime('%Y-%m-%d')}\n\n"
+            "للتجديد، استخدم الأمر /renew"
+        )
+        
+        return {
+            'chat_id': chat_id,
+            'text': message,
+            'parse_mode': ParseMode.MARKDOWN
+        }
 
 class NotificationManager:
     def generate_weekly_report(self):
