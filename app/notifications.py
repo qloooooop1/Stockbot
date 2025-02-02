@@ -8,36 +8,45 @@ from .database import db, Opportunity, Stock
 from telegram import ParseMode
 from datetime import datetime
 
+from datetime import datetime
+
 class NotificationManager:
     @staticmethod
-    def send_renewal_request(owner_id, chat_id, group_title):
-        message = (
-            "🔔 **طلب تجديد اشتراك**\n\n"
-            f"📌 المجموعة: {group_title}\n"
-            f"🆔 الآيدي: `{chat_id}`\n\n"
-            "الرجاء إدخال عدد الأيام الجديدة:"
+    def group_activation_message():
+        return (
+            "🌟 *مرحبًا بكم في البوت الذكي* 🌟\n\n"
+            "لتفعيل البوت والاستفادة من ميزاته:\n"
+            "1. اشترك في قناتنا الرسمية\n"
+            "2. تواصل مع المالك للتفعيل\n\n"
+            "📢 القناة الرسمية: @trend_600\n"
+            "📩 الدعم الفني: @trend_600\n\n"
+            "⚡ *الميزات المتاحة:*\n"
+            "- تحليل فني متقدم للأسهم\n"
+            "- تنبيهات الفرص الذهبية\n"
+            "- تقارير أداء أسبوعية\n"
+            "- متابعة الأهداف التلقائية"
         )
-        
-        return {
-            'chat_id': owner_id,
-            'text': message,
-            'parse_mode': ParseMode.MARKDOWN
-        }
 
     @staticmethod
-    def send_subscription_details(chat_id, days_left, end_date):
-        message = (
-            "📅 **معلومات الاشتراك**\n\n"
-            f"⏳ الأيام المتبقية: {days_left}\n"
-            f"📅 تاريخ الانتهاء: {end_date.strftime('%Y-%m-%d')}\n\n"
-            "للتجديد، استخدم الأمر /renew"
+    def private_message_response():
+        return (
+            "🔒 *عذرًا، هذا البوت مخصص للمجموعات*\n\n"
+            "للاستخدام الصحيح:\n"
+            "1. أضف البوت إلى مجموعتك\n"
+            "2. اتبع إرشادات التفعيل\n\n"
+            "📌 للتفعيل أو الاستفسارات:\n"
+            "@trend_600"
         )
-        
-        return {
-            'chat_id': chat_id,
-            'text': message,
-            'parse_mode': ParseMode.MARKDOWN
-        }
+
+    @staticmethod
+    def subscription_reminder():
+        return (
+            "⏰ *تذكير بالتجديد*\n\n"
+            "للاستمرار في استخدام البوت:\n"
+            "1. تأكد من اشتراكك في القناة\n"
+            "2. قم بتجديد الاشتراك عبر @trend_600\n\n"
+            "📅 مدة الاشتراك: 30 يوم"
+        )
 
 class NotificationManager:
     def generate_weekly_report(self):
