@@ -1,14 +1,18 @@
-from telegram import ParseMode
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 class NotificationManager:
-    def send_daily_report(self, chat_id):
-        message = "📊 تقرير السوق اليومي:\n\nأعلى 5 أسهم:\n1. ...\n\nأدنى 5 أسهم:\n1. ..."
-        self._send_message(chat_id, message)
+    # ... الدوال الحالية
+    
+    def send_goal_alert(self, chat_id, message):
+        keyboard = [
+            [InlineKeyboardButton("🔄 تحديث الأهداف", callback_data='update_goals')],
+            [InlineKeyboardButton("❌ إغلاق الفرصة", callback_data='close_opportunity')]
+        ]
+        self._send_message(
+            chat_id=chat_id,
+            text=message,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
-    def send_opportunity_alert(self, chat_id, opportunity):
-        message = f"⭐️ فرصة ذهبية في {opportunity['symbol']}\nالأهداف: {opportunity['targets']}"
-        self._send_message(chat_id, message)
-
-    def _send_message(self, chat_id, text):
-        # سيتم تنفيذ الإرسال الفعلي هنا
-        pass
+    def send_goal_update(self, chat_id, message):
+        self._send_message(chat_id, f"🔄 {message}")
