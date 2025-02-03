@@ -1,9 +1,35 @@
+import os
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
-import os
+from datetime import datetime
 
+Base = declarative_base()
+
+class ContentRegistry(Base):
+    __tablename__ = 'content_registry'
+    id = Column(String(64), primary_key=True)  # SHA-256 hash
+    content_type = Column(String(50))
+    first_sent = Column(DateTime)
+    last_sent = Column(DateTime)
+    sent_count = Column(Integer, default=1)
+    related_groups = Column(JSON)  # قائمة بالمجموعات التي استلمت المحتوى
+
+class GroupSettings(Base):
+    __tablename__ = 'group_settings'
+    chat_id = Column(String(20), primary_key=True)
+    receive_global = Column(Boolean, default=True)
+    receive_alerts = Column(Boolean, default=True)
+    last_active = Column(DateTime, default=datetime.now)
+
+class GlobalImpact(Base):
+    __tablename__ = 'global_events'
+    id = Column(String, primary_key=True)
+    event_type = Column(String(50))
+    impact_level = Column(Integer)
+    affected_stocks = Column(JSON)
+    timestamp = Column(DateTime, default=datetime.now)
 Base = declarative_base()
 
 class CachedData(Base):
