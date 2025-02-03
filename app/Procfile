@@ -1,1 +1,2 @@
+web: python -m app.bot_core
 worker: python -m app.bot_core
