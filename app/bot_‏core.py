@@ -11,11 +11,10 @@ from flask import Flask
 app = Flask(__name__)
 
 # Custom modules
-from .database import db, ContentRegistry, GlobalImpact, GroupSettings, PendingGroup, PrivateMessage, UserLimit, CachedData
+from .database import db, ContentRegistry, GlobalImpact
 from .utils.content_filter import classify_content
 from .utils.duplicate_checker import is_duplicate
 from .config import Config
-from cachetools import TTLCache
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -25,16 +24,13 @@ logger = logging.getLogger(__name__)
 
 def _sanitize_input(text):
     # منع الهجمات الأمنية الأساسية
-    cleaned = text.replace('<', '&lt;').replace('>', '&gt;')  # إصلاح: كان هناك خطأ في التنسيق
+    cleaned = text.replace('<', '&lt;').replace('>', '&gt;')
     return cleaned.strip()[:100]  # تحديد طول الإدخال
 
 def _is_malicious_request(user_id):
     # كشف النشاط المشبوه
-    # إصلاح: 'self' ليس معرفًا هنا، يجب أن تكون هذه الدالة جزءًا من فئة أو تمرر لها البوت كمعامل
-    # إذا كانت جزءًا من فئة، يجب تعديله كالتالي:
-    # recent_requests = self._count_requests(user_id, time_window=60)
-    # إذا كانت دالة مستقلة، ستحتاج إلى معامل للبوت
-    pass  # يجب تعريف هذه الدالة أو إزالتها إذا لم تكن ضرورية
+    recent_requests = self._count_requests(user_id, time_window=60)
+    return recent_requests > 20  # أكثر من 20 طلب/دقيقة
 
 class SaudiStockBot:
     def __init__(self):
@@ -129,15 +125,36 @@ class SaudiStockBot:
             for group in groups:
                 self._send_enriched_message(group.chat_id, message)
 
-# لاحقة الكود المقدم تحتوي على فئات ودوال أخرى، لكن بما أن الدوال الموجودة في هذا الملف معرفة في ملفات أخرى، لم يتم إجراء أي تغييرات على الكود اللاحق.
+    def _generate_content_hash(self, text):
+        return hashlib.md5(text.encode()).hexdigest()
 
-# Cache settings
-data_cache = TTLCache(maxsize=100, ttl=3600)
-alert_cache = TTLCache(maxsize=50, ttl=86400)
+    def _fetch_stock_data(self, symbol):
+        # Implementation for fetching stock data
+        pass
 
-@app.route('/')
-def home():
-    return "Bot is running!"
+    def _send_enriched_message(self, chat_id, message):
+        # Implementation for sending enriched message
+        pass
+
+    def _handle_global_event(self, update, message):
+        # Implementation for handling global events
+        pass
+
+    def _generate_daily_report(self):
+        # Implementation for generating a daily report
+        pass
+
+    def _format_global_event(self, event):
+        # Implementation for formatting global events
+        pass
+
+    def _register_content(self, hash, type):
+        # Implementation for registering content in database
+        pass
+
+    def _count_requests(self, user_id, time_window):
+        # Implementation for counting user requests within a time window
+        pass
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
