@@ -1,3 +1,2 @@
-web: gunicorn app.bot_core:bot.run
+web: gunicorn --preload app.bot_core:bot.run
 worker: python -m apscheduler executors --url $DATABASE_URL
-web: gunicorn --preload your_app.wsgi:application
