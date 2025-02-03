@@ -20,6 +20,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def _sanitize_input(text):
+    # منع الهجمات الأمنية الأساسية
+    cleaned = text.replace('<', '&lt;').replace('>', '&gt;')
+    return cleaned.strip()[:100]  # تحديد طول الإدخال
+
+def _is_malicious_request(user_id):
+    # كشف النشاط المشبوه
+    recent_requests = self._count_requests(user_id, time_window=60)
+    return recent_requests > 20  # أكثر من 20 طلب/دقيقة
+
 class SaudiStockBot:
     def __init__(self):
         self.updater = Updater(Config.TELEGRAM_TOKEN, use_context=True)
