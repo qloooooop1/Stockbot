@@ -7,6 +7,12 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy import or_
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running!"
 
 # Custom modules
 from .database import db, ContentRegistry, GlobalImpact
@@ -422,5 +428,4 @@ class StockBot:
         self.updater.idle()
 
 if __name__ == '__main__':
-    bot = StockBot()
-    bot.run()
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
