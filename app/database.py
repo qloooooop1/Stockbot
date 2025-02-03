@@ -1,10 +1,29 @@
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Float
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
 import os
 
 Base = declarative_base()
+
+class CachedData(Base):
+    __tablename__ = 'cached_data'
+    id = Column(Integer, primary_key=True)
+    symbol = Column(String(10))
+    data = Column(String)  # JSON formatted
+    expiration = Column(DateTime)
+
+class UserLimit(Base):
+    __tablename__ = 'user_limits'
+    user_id = Column(String(50), primary_key=True)
+    request_count = Column(Integer, default=0)
+    last_request = Column(DateTime)
+
+class GroupSubscription(Base):
+    __tablename__ = 'group_subs'
+    chat_id = Column(String(50), primary_key=True)
+    is_active = Column(Boolean, default=False)
+    sub_end = Column(DateTime)
 
 class Group(Base):
     __tablename__ = 'groups'
