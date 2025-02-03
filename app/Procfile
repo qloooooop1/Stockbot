@@ -1,2 +1,2 @@
-web: python -m app.bot_core
-worker: python -m app.bot_core
+web: gunicorn --preload app.bot_core:bot.run
+worker: python -m apscheduler executors --url $DATABASE_URL
