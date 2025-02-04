@@ -42,10 +42,10 @@ class SaudiStockBot:
         self._schedule_tasks()
 
     def _setup_handlers(self):
-        dp = self.application.dispatcher
-        dp.add_handler(CommandHandler("start", self._start_command))
-        dp.add_handler(MessageHandler(filters.TEXT & filters.ChatType.GROUP, self._handle_group_message))
-        dp.add_handler(CommandHandler("settings", self._settings_command))
+        # إضافة handlers مباشرة إلى التطبيق
+        self.application.add_handler(CommandHandler("start", self._start_command))
+        self.application.add_handler(MessageHandler(filters.TEXT & filters.ChatType.GROUP, self._handle_group_message))
+        self.application.add_handler(CommandHandler("settings", self._settings_command))
 
     def _schedule_tasks(self):
         # مهمات مجدولة
@@ -159,4 +159,4 @@ class SaudiStockBot:
         pass
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000))) 
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
