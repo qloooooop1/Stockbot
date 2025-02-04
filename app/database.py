@@ -1,111 +1,106 @@
-import os
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Float
-from sqlalchemy.types import JSON, Date
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 from datetime import datetime
+from flask_sqlalchemy import SQLAlchemy
 
-Base = declarative_base()
+db = SQLAlchemy()
 
-class ContentRegistry(Base):
+class ContentRegistry(db.Model):
     __tablename__ = 'content_registry'
-    id = Column(String(64), primary_key=True)  # SHA-256 hash
-    content_type = Column(String(50))
-    first_sent = Column(DateTime)
-    last_sent = Column(DateTime)
-    sent_count = Column(Integer, default=1)
-    related_groups = Column(JSON)  # قائمة بالمجموعات التي استلمت المحتوى
+    id = db.Column(db.String(64), primary_key=True)
+    content_type = db.Column(db.String(50))
+    first_sent = db.Column(db.DateTime)
+    last_sent = db.Column(db.DateTime)
+    sent_count = db.Column(db.Integer, default=1)
+    related_groups = db.Column(db.JSON)
 
-class GroupSettings(Base):
+class GroupSettings(db.Model):
     __tablename__ = 'group_settings'
-    chat_id = Column(String(20), primary_key=True)
-    receive_global = Column(Boolean, default=True)
-    receive_alerts = Column(Boolean, default=True)
-    last_active = Column(DateTime, default=datetime.now)
-    reports_enabled = Column(Boolean, default=True)
+    chat_id = db.Column(db.String(20), primary_key=True)
+    receive_global = db.Column(db.Boolean, default=True)
+    receive_alerts = db.Column(db.Boolean, default=True)
+    last_active = db.Column(db.DateTime, default=datetime.now)
+    reports_enabled = db.Column(db.Boolean, default=True)
 
-class GlobalImpact(Base):
+class GlobalImpact(db.Model):
     __tablename__ = 'global_events'
-    id = Column(String, primary_key=True)
-    event_type = Column(String(50))
-    impact_level = Column(Integer)
-    affected_stocks = Column(JSON)
-    timestamp = Column(DateTime, default=datetime.now)
+    id = db.Column(db.String, primary_key=True)
+    event_type = db.Column(db.String(50))
+    impact_level = db.Column(db.Integer)
+    affected_stocks = db.Column(db.JSON)
+    timestamp = db.Column(db.DateTime, default=datetime.now)
 
-class CachedData(Base):
+class CachedData(db.Model):
     __tablename__ = 'cached_data'
-    id = Column(Integer, primary_key=True)
-    symbol = Column(String(10))
-    data = Column(String)  # JSON formatted
-    expiration = Column(DateTime)
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(10))
+    data = db.Column(db.String)
+    expiration = db.Column(db.DateTime)
 
-class UserLimit(Base):
+class UserLimit(db.Model):
     __tablename__ = 'user_limits'
-    user_id = Column(String(50), primary_key=True)
-    request_count = Column(Integer, default=0)
-    last_request = Column(DateTime)
+    user_id = db.Column(db.String(50), primary_key=True)
+    request_count = db.Column(db.Integer, default=0)
+    last_request = db.Column(db.DateTime)
 
-class GroupSubscription(Base):
+class GroupSubscription(db.Model):
     __tablename__ = 'group_subs'
-    chat_id = Column(String(50), primary_key=True)
-    is_active = Column(Boolean, default=False)
-    sub_end = Column(DateTime)
+    chat_id = db.Column(db.String(50), primary_key=True)
+    is_active = db.Column(db.Boolean, default=False)
+    sub_end = db.Column(db.DateTime)
 
-class Group(Base):
+class Group(db.Model):
     __tablename__ = 'groups'
-    id = Column(Integer, primary_key=True)
-    chat_id = Column(String(50), unique=True)
-    title = Column(String(200))
-    admin_username = Column(String(100))
-    is_active = Column(Boolean, default=False)
-    subscription_end = Column(DateTime)
-    last_reminder = Column(DateTime)
-    created_at = Column(DateTime, default=datetime.now)
+    id = db.Column(db.Integer, primary_key=True)
+    chat_id = db.Column(db.String(50), unique=True)
+    title = db.Column(db.String(200))
+    admin_username = db.Column(db.String(100))
+    is_active = db.Column(db.Boolean, default=False)
+    subscription_end = db.Column(db.DateTime)
+    last_reminder = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
-class PendingGroup(Base):
+class PendingGroup(db.Model):
     __tablename__ = 'pending_groups'
-    id = Column(Integer, primary_key=True)
-    chat_id = Column(String(50), unique=True)
-    title = Column(String(200))
-    admin_username = Column(String(100))
-    request_date = Column(DateTime, default=datetime.now)
+    id = db.Column(db.Integer, primary_key=True)
+    chat_id = db.Column(db.String(50), unique=True)
+    title = db.Column(db.String(200))
+    admin_username = db.Column(db.String(100))
+    request_date = db.Column(db.DateTime, default=datetime.now)
 
-class PrivateMessage(Base):
+class PrivateMessage(db.Model):
     __tablename__ = 'private_messages'
-    id = Column(Integer, primary_key=True)
-    user_id = Column(String(50))
-    message_count = Column(Integer, default=0)
-    last_message = Column(DateTime)
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(50))
+    message_count = db.Column(db.Integer, default=0)
+    last_message = db.Column(db.DateTime)
 
-class Stock(Base):
+class Stock(db.Model):
     __tablename__ = 'stocks'
-    symbol = Column(String(10), primary_key=True)
-    name = Column(String(100))
-    sector = Column(String(50))
+    symbol = db.Column(db.String(10), primary_key=True)
+    name = db.Column(db.String(100))
+    sector = db.Column(db.String(50))
 
-class Opportunity(Base):
+class Opportunity(db.Model):
     __tablename__ = 'opportunities'
-    id = Column(Integer, primary_key=True)
-    symbol = Column(String(10))
-    strategy = Column(String(50))
-    entry_date = Column(Date)
-    entry_price = Column(Float)
-    targets = Column(JSON)  # {target1: price, target2: price, ...}
-    current_target = Column(Integer, default=1)
-    status = Column(String(20))  # active/completed/closed
-    achieved_targets = Column(JSON, default=[])
-    weekly_progress = Column(JSON, default={})
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(10))
+    strategy = db.Column(db.String(50))
+    entry_date = db.Column(db.Date)
+    entry_price = db.Column(db.Float)
+    targets = db.Column(db.JSON)
+    current_target = db.Column(db.Integer, default=1)
+    status = db.Column(db.String(20))
+    achieved_targets = db.Column(db.JSON, default=[])
+    weekly_progress = db.Column(db.JSON, default={})
 
-class StrategyConfig(Base):
+class StrategyConfig(db.Model):
     __tablename__ = 'strategies'
-    id = Column(String(50), primary_key=True)
-    display_name = Column(String(100))
-    parameters = Column(JSON)
-    is_active = Column(Boolean, default=True)
+    id = db.Column(db.String(50), primary_key=True)
+    display_name = db.Column(db.String(100))
+    parameters = db.Column(db.JSON)
+    is_active = db.Column(db.Boolean, default=True)
 
-# تهيئة قاعدة البيانات
 DATABASE_URL = os.getenv('DATABASE_URL').replace('postgres://', 'postgresql://', 1)
 engine = create_engine(DATABASE_URL)
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
-db = Session() 
+db = Session()
