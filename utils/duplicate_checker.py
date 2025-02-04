@@ -10,3 +10,7 @@ def is_duplicate(content_hash):
             if existing.sent_count >= Config.DUPLICATION_RULES['allowed_repeats']:
                 return True
     return False
+    
+    def is_duplicate(content_hash):
+    # هنا سيكون تنفيذ للتحقق مما إذا كان المحتوى مكررًا
+    pass
