@@ -2,7 +2,7 @@ import os
 import logging
 import hashlib
 from datetime import datetime, timedelta
-from flask import Flask, request, send_from_directory
+from flask import Flask, request
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackContext
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -181,15 +181,6 @@ def webhook():
 @app.route('/')
 def index():
     return "Hello, this is the root endpoint. The bot is running.", 200
-
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico')
-
-@app.route('/apple-touch-icon.png')
-def apple_touch_icon():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'apple-touch-icon.png')
-
 
 if __name__ == '__main__':
     # تعيين webhook
