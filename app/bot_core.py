@@ -3,15 +3,16 @@ import logging
 import hashlib
 import yfinance as yf
 from datetime import datetime, timedelta
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, filters, CallbackContext
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy import or_
 from flask import Flask
+
 app = Flask(__name__)
 
 # Custom modules
-from .database import db, ContentRegistry, GlobalImpact
+from .database import db, ContentRegistry, GlobalImpact, GroupSettings
 from .utils.content_filter import classify_content
 from .utils.duplicate_checker import is_duplicate
 from .config import Config
@@ -33,8 +34,8 @@ def _is_malicious_request(user_id):
     return recent_requests > 20  # أكثر من 20 طلب/دقيقة
 
 class SaudiStockBot:
-    def __init__(self):
-        self.updater = Updater(Config.TELEGRAM_TOKEN, use_context=True)
+    def __init__(self, token):
+        self.updater = Updater(token, use_context=True)
         self.scheduler = BackgroundScheduler()
         self._setup_handlers()
         self._schedule_tasks()
@@ -42,7 +43,7 @@ class SaudiStockBot:
     def _setup_handlers(self):
         dp = self.updater.dispatcher
         dp.add_handler(CommandHandler("start", self._start_command))
-        dp.add_handler(MessageHandler(Filters.text & Filters.group, self._handle_group_message))
+        dp.add_handler(MessageHandler(filters.TEXT & filters.ChatType.GROUP, self._handle_group_message))
         dp.add_handler(CommandHandler("settings", self._settings_command))
 
     def _schedule_tasks(self):
@@ -129,32 +130,36 @@ class SaudiStockBot:
         return hashlib.md5(text.encode()).hexdigest()
 
     def _fetch_stock_data(self, symbol):
-        # Implementation for fetching stock data
+        # هنا سيكون تنفيذ لجلب بيانات الأسهم
         pass
 
     def _send_enriched_message(self, chat_id, message):
-        # Implementation for sending enriched message
+        # هنا سيكون تنفيذ لإرسال الرسالة المخصبة
         pass
 
     def _handle_global_event(self, update, message):
-        # Implementation for handling global events
+        # هنا سيكون تنفيذ لمعالجة الأحداث العالمية
         pass
 
     def _generate_daily_report(self):
-        # Implementation for generating a daily report
+        # هنا سيكون تنفيذ لتوليد تقرير يومي
         pass
 
     def _format_global_event(self, event):
-        # Implementation for formatting global events
+        # هنا سيكون تنفيذ لتنسيق الأحداث العالمية
         pass
 
     def _register_content(self, hash, type):
-        # Implementation for registering content in database
+        # هنا سيكون تنفيذ لتسجيل المحتوى في قاعدة البيانات
         pass
 
     def _count_requests(self, user_id, time_window):
-        # Implementation for counting user requests within a time window
+        # هنا سيكون تنفيذ لحساب طلبات المستخدم ضمن نافذة زمنية
         pass
 
+# إعداد البوت
+bot = SaudiStockBot(Config.TELEGRAM_TOKEN)
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    bot.updater.start_polling()
+    bot.updater.idle()
