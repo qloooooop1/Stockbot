@@ -15,7 +15,7 @@ app = Flask(__name__)
 from .database import db, ContentRegistry, GlobalImpact, GroupSettings
 from .utils.content_filter import classify_content
 from .utils.duplicate_checker import is_duplicate
-from .config import Config
+from .utils.config import Config
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -52,7 +52,7 @@ class SaudiStockBot:
             self._send_daily_summary,
             'cron',
             hour=16,  # 4PM توقيت السعودية
-            timezone='Asia/Riyadh'
+            timezone=Config.MARKET_TIMEZONE
         )
         self.scheduler.add_job(
             self._check_global_events,
