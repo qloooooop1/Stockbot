@@ -1,8 +1,8 @@
 import os
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Float
+from sqlalchemy.types import JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime, timedelta
 from datetime import datetime
 
 Base = declarative_base()
@@ -30,7 +30,6 @@ class GlobalImpact(Base):
     impact_level = Column(Integer)
     affected_stocks = Column(JSON)
     timestamp = Column(DateTime, default=datetime.now)
-Base = declarative_base()
 
 class CachedData(Base):
     __tablename__ = 'cached_data'
