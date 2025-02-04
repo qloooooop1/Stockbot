@@ -1,3 +1,3 @@
-from .bot_core import StockBot
+from .bot_core import SaudiStockBot
 
-bot = StockBot()
+bot = SaudiStockBot()
