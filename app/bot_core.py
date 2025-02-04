@@ -165,4 +165,7 @@ class SaudiStockBot:
         pass
 
 if __name__ == '__main__':
+    # بدء التطبيق
+    bot = SaudiStockBot()
+    bot.application.run_polling()
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
