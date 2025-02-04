@@ -3,7 +3,7 @@ from typing import Dict, List
 from datetime import datetime
 import numpy as np
 import pandas as pd
-from .database import db, Opportunity, StrategyConfigDB
+from .database import db, Opportunity, StrategyConfig as StrategyConfigDB
 from .technical_analysis import TechnicalAnalyzer
 from .notifications import NotificationManager
 
@@ -49,7 +49,7 @@ class TradingStrategies:
 
         # استراتيجية فيبوناتشي
         if self._is_strategy_active('FIBONACCI_BREAKOUT'):
-            fib_levels = self.ta.fibonacci_levels(data)
+            fib_levels = self.ta.calculate_fibonacci_levels(data)
             if current_price > fib_levels['61.8%']:
                 targets = {
                     '1': fib_levels['100%'],
@@ -63,14 +63,22 @@ class TradingStrategies:
         return opportunities
 
     def _create_opportunity(self, symbol, strategy_type, entry, targets):
+        opportunity = Opportunity(
+            symbol=symbol,
+            strategy=strategy_type,
+            entry_price=entry,
+            targets=targets,
+            current_target=1,
+            status='active',
+            created_at=datetime.now()
+        )
+        db.session.add(opportunity)
+        db.session.commit()
         return {
             'symbol': symbol,
             'strategy': strategy_type,
             'entry_price': entry,
-            'targets': targets,
-            'current_target': 1,
-            'status': 'active',
-            'created_at': datetime.now()
+            'targets': targets
         }
 
     def _calculate_fibonacci_targets(self, entry, data):
@@ -83,8 +91,8 @@ class TradingStrategies:
         }
 
     def _is_strategy_active(self, strategy_id):
-        config = db.session.query(StrategyConfigDB).filter_by(strategy_id=strategy_id).first()
-        return config.is_active if config else self.strategies.get(strategy_id, False)
+        config = db.session.query(StrategyConfigDB).filter_by(id=strategy_id).first()
+        return config.is_active if config else self.strategies.get(strategy_id, False).is_active
 
 class GoalTracker:
     def __init__(self):
@@ -95,6 +103,10 @@ class GoalTracker:
         for opp in opportunities:
             current_price = self._get_current_price(opp.symbol)
             self._check_targets(opp, current_price)
+
+    def _get_current_price(self, symbol):
+        # هنا سيكون تنفيذ لجلب السعر الحالي للسهم
+        pass
 
     def _check_targets(self, opp, current_price):
         targets = opp.targets
