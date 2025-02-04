@@ -22,6 +22,7 @@ class GroupSettings(Base):
     receive_global = Column(Boolean, default=True)
     receive_alerts = Column(Boolean, default=True)
     last_active = Column(DateTime, default=datetime.now)
+    reports_enabled = Column(Boolean, default=True)
 
 class GlobalImpact(Base):
     __tablename__ = 'global_events'
@@ -101,11 +102,6 @@ class StrategyConfig(Base):
     display_name = Column(String(100))
     parameters = Column(JSON)
     is_active = Column(Boolean, default=True)
-
-class GroupSettings(Base):
-    __tablename__ = 'groups'
-    chat_id = Column(String(20), primary_key=True)
-    reports_enabled = Column(Boolean, default=True)
 
 # تهيئة قاعدة البيانات
 DATABASE_URL = os.getenv('DATABASE_URL').replace('postgres://', 'postgresql://', 1)
