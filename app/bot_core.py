@@ -17,7 +17,7 @@ from utils.duplicate_checker import is_duplicate
 from utils.config import Config
 
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format='%(asctime)s - %(name)s - %(levellevel)s - %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ def _is_malicious_request(user_id):
 class SaudiStockBot:
     def __init__(self):
         # استخدام ApplicationBuilder بدلاً من Updater
-        self.application = ApplicationBuilder().token(Config.TELEGRAM_TOKEN).build()
+        self.application = ApplicationBuilder().token(os.getenv('TELEGRAM_TOKEN')).build()
         self.scheduler = BackgroundScheduler()
         self._setup_handlers()
         self._schedule_tasks()
@@ -178,4 +178,4 @@ if __name__ == '__main__':
     bot.application.bot.set_webhook(url=webhook_url)
     
     # بدء التطبيق
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000))) 
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
