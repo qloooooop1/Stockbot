@@ -1,13 +1,12 @@
 import yfinance as yf
 import pandas as pd
 from sqlalchemy import update
-from .database import db, Stock
+from app.database import db, Stock
 
 class SaudiMarketData:
     def update_stock_list(self):
         tasi = yf.Ticker("^TASI.SR")
         components = tasi.info.get('components', [])
-        
         with db.session() as session:
             for comp in components:
                 session.merge(Stock(
