@@ -34,8 +34,8 @@ def _is_malicious_request(user_id):
     return recent_requests > 20  # أكثر من 20 طلب/دقيقة
 
 class SaudiStockBot:
-    def __init__(self, token):
-        self.updater = Updater(token, use_context=True)
+    def __init__(self):
+        self.updater = Updater(Config.TELEGRAM_TOKEN, use_context=True)
         self.scheduler = BackgroundScheduler()
         self._setup_handlers()
         self._schedule_tasks()
@@ -157,9 +157,5 @@ class SaudiStockBot:
         # هنا سيكون تنفيذ لحساب طلبات المستخدم ضمن نافذة زمنية
         pass
 
-# إعداد البوت
-bot = SaudiStockBot(Config.TELEGRAM_TOKEN)
-
 if __name__ == '__main__':
-    bot.updater.start_polling()
-    bot.updater.idle()
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
