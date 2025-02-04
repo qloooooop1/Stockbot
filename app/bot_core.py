@@ -178,6 +178,10 @@ def webhook():
         logger.warning("Received a non-POST request on /webhook")
         return "Method Not Allowed", 405
 
+@app.route('/')
+def index():
+    return "Hello, this is the root endpoint. The bot is running.", 200
+
 if __name__ == '__main__':
     # تعيين webhook
     webhook_url = f"https://stock1.herokuapp.com/webhook"
