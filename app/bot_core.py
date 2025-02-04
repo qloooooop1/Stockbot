@@ -6,8 +6,7 @@ from datetime import datetime, timedelta
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackContext
 from apscheduler.schedulers.background import BackgroundScheduler
-from sqlalchemy import or_
-from flask import Flask
+from flask import Flask, request
 
 app = Flask(__name__)
 
@@ -164,8 +163,19 @@ class SaudiStockBot:
         # هنا سيكون تنفيذ لحساب طلبات المستخدم ضمن نافذة زمنية
         pass
 
+bot = SaudiStockBot()
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    if request.method == "POST":
+        update = Update.de_json(request.get_json(force=True), bot.application.bot)
+        bot.application.process_update(update)
+        return "ok", 200
+
 if __name__ == '__main__':
+    # تعيين webhook
+    webhook_url = f"https://{os.getenv('HEROKU_APP_NAME')}.herokuapp.com/webhook"
+    bot.application.bot.set_webhook(url=webhook_url)
+    
     # بدء التطبيق
-    bot = SaudiStockBot()
-    bot.application.run_polling()
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
