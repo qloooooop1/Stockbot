@@ -162,4 +162,4 @@ bot = SaudiStockBot(Config.TELEGRAM_TOKEN)
 
 if __name__ == '__main__':
     bot.updater.start_polling()
-    bot.updater.idle()
+    bot.updater.idle() 
