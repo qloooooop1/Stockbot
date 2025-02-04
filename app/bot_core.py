@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackContext
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -16,8 +17,9 @@ from utils.content_filter import classify_content
 from utils.duplicate_checker import is_duplicate
 from utils.config import Config
 
+# إعداد تسجيل الدخول
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levellevel)s - %(message)s',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
@@ -35,7 +37,7 @@ def _is_malicious_request(user_id):
 class SaudiStockBot:
     def __init__(self):
         # استخدام ApplicationBuilder بدلاً من Updater
-        self.application = ApplicationBuilder().token(os.getenv('TELEGRAM_TOKEN')).build()
+        self.application = ApplicationBuilder().token(Config.TELEGRAM_TOKEN).build()
         self.scheduler = BackgroundScheduler()
         self._setup_handlers()
         self._schedule_tasks()
@@ -50,13 +52,11 @@ class SaudiStockBot:
         # مهمات مجدولة
         self.scheduler.add_job(
             self._send_daily_summary,
-            'cron',
-            hour=16,  # 4PM توقيت السعودية
-            timezone=Config.MARKET_TIMEZONE
+            trigger=CronTrigger(hour=16, timezone=Config.MARKET_TIMEZONE)  # 4PM توقيت السعودية
         )
         self.scheduler.add_job(
             self._check_global_events,
-            'interval',
+            trigger='interval',
             hours=2
         )
         self.scheduler.start()
