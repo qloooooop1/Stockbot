@@ -1,13 +1,12 @@
 import os
 import logging
 import hashlib
-import yfinance as yf
 from datetime import datetime, timedelta
+from flask import Flask, request
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackContext
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from flask import Flask, request
 
 app = Flask(__name__)
 
@@ -118,6 +117,7 @@ class SaudiStockBot:
         )
 
     def _send_daily_summary(self):
+        logger.info("Executing _send_daily_summary task")
         # إرسال تقرير يومي لجميع المجموعات
         groups = db.session.query(GroupSettings).all()
         for group in groups:
@@ -125,6 +125,7 @@ class SaudiStockBot:
             self._send_enriched_message(group.chat_id, report)
 
     def _check_global_events(self):
+        logger.info("Executing _check_global_events task")
         events = GlobalImpact.get_recent_events()
         for event in events:
             message = self._format_global_event(event)
@@ -168,9 +169,14 @@ bot = SaudiStockBot()
 @app.route('/webhook', methods=['POST'])
 def webhook():
     if request.method == "POST":
+        logger.info("Received a POST request on /webhook")
         update = Update.de_json(request.get_json(force=True), bot.application.bot)
         bot.application.process_update(update)
+        logger.info("Processed the update")
         return "ok", 200
+    else:
+        logger.warning("Received a non-POST request on /webhook")
+        return "Method Not Allowed", 405
 
 if __name__ == '__main__':
     # تعيين webhook
