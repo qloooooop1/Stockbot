@@ -1,5 +1,5 @@
-from .database import db, ContentRegistry
-from .config import Config
+from app.database import db, ContentRegistry
+from utils.config import Config
 from datetime import datetime
 
 def is_duplicate(content_hash):
@@ -10,7 +10,3 @@ def is_duplicate(content_hash):
             if existing.sent_count >= Config.DUPLICATION_RULES['allowed_repeats']:
                 return True
     return False
-    
-    def is_duplicate(content_hash):
-    # هنا سيكون تنفيذ للتحقق مما إذا كان المحتوى مكررًا
-    pass
