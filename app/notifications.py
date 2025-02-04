@@ -8,8 +8,6 @@ from .database import db, Opportunity, Stock
 from telegram import ParseMode
 from datetime import datetime
 
-from datetime import datetime
-
 class NotificationManager:
     @staticmethod
     def group_activation_message():
@@ -48,7 +46,6 @@ class NotificationManager:
             "📅 مدة الاشتراك: 30 يوم"
         )
 
-class NotificationManager:
     def generate_weekly_report(self):
         # حساب تواريخ الأسبوع
         end_date = datetime.now()
@@ -141,6 +138,7 @@ class NotificationManager:
         
         report += "📌 <b>الفرص النشطة:</b>\n"
         for opp in data['active']:
+            current_target = opp.targets[f'target{
             current_target = opp.targets[f'target{opp.current_target}']
             report += f"- {stocks[opp.symbol]} ({opp.symbol}): الهدف {opp.current_target} ({current_target:.2f})\n"
         
@@ -148,3 +146,7 @@ class NotificationManager:
 
     def send_report(self, chat_id, report):
         self._send_message(chat_id, report, parse_mode=ParseMode.HTML)
+
+    def _send_message(self, chat_id, message, **kwargs):
+        # هنا سيكون تنفيذ إرسال الرسالة
+        pass
