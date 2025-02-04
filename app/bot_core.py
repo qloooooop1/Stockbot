@@ -19,8 +19,8 @@ from utils.config import Config
 
 # إعداد تسجيل الدخول
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    format='%(asctime)s - %(name)s - %(levellevel)s - %(message)s',
+    level=logging.DEBUG  # ضبط مستوى التسجيل إلى DEBUG
 )
 logger = logging.getLogger(__name__)
 
@@ -118,6 +118,7 @@ class SaudiStockBot:
         )
 
     def _send_daily_summary(self):
+        logger.info("Executing _send_daily_summary task")
         # إرسال تقرير يومي لجميع المجموعات
         groups = db.session.query(GroupSettings).all()
         for group in groups:
@@ -125,6 +126,7 @@ class SaudiStockBot:
             self._send_enriched_message(group.chat_id, report)
 
     def _check_global_events(self):
+        logger.info("Executing _check_global_events task")
         events = GlobalImpact.get_recent_events()
         for event in events:
             message = self._format_global_event(event)
