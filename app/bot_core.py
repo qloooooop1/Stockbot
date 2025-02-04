@@ -13,9 +13,9 @@ app = Flask(__name__)
 
 # Custom modules
 from .database import db, ContentRegistry, GlobalImpact, GroupSettings
-from .utils.content_filter import classify_content
-from .utils.duplicate_checker import is_duplicate
-from .utils.config import Config
+from utils.content_filter import classify_content
+from utils.duplicate_checker import is_duplicate
+from utils.config import Config
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
