@@ -7,4 +7,4 @@ def classify_content(text):
         for keyword in keywords:
             if keyword in text_lower:
                 return category
-    return 'other'
+    return 'other' 
