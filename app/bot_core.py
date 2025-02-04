@@ -1,58 +1,51 @@
 import os
 import logging
-import hashlib
-import yfinance as yf
-from datetime import datetime, timedelta
+from flask import Flask, request
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackContext
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from flask import Flask, request
 
+# إعداد تطبيق Flask
 app = Flask(__name__)
-
-# Custom modules
-from .database import db, ContentRegistry, GlobalImpact, GroupSettings
-from utils.content_filter import classify_content
-from utils.duplicate_checker import is_duplicate
-from utils.config import Config
 
 # إعداد تسجيل الدخول
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levellevel)s - %(message)s',
-    level=logging.DEBUG  # ضبط مستوى التسجيل إلى DEBUG
+    level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-def _sanitize_input(text):
-    # منع الهجمات الأمنية الأساسية
-    cleaned = text.replace('<', '&lt;').replace('>', '&gt;')
-    return cleaned.strip()[:100]  # تحديد طول الإدخال
+# إعدادات التكوين
+class Config:
+    TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+    MARKET_TIMEZONE = 'Asia/Riyadh'
 
-def _is_malicious_request(user_id):
-    # كشف النشاط المشبوه
-    recent_requests = self._count_requests(user_id, time_window=60)
-    return recent_requests > 20  # أكثر من 20 طلب/دقيقة
+# تعريف البوت
+bot = None
+
+def _sanitize_input(text):
+    cleaned = text.replace('<', '&lt;').replace('>', '&gt;')
+    return cleaned.strip()[:100]
 
 class SaudiStockBot:
     def __init__(self):
-        # استخدام ApplicationBuilder بدلاً من Updater
+        global bot
         self.application = ApplicationBuilder().token(Config.TELEGRAM_TOKEN).build()
+        bot = self
         self.scheduler = BackgroundScheduler()
         self._setup_handlers()
         self._schedule_tasks()
 
     def _setup_handlers(self):
-        # إضافة handlers مباشرة إلى التطبيق
         self.application.add_handler(CommandHandler("start", self._start_command))
         self.application.add_handler(MessageHandler(filters.TEXT & filters.ChatType.GROUP, self._handle_group_message))
         self.application.add_handler(CommandHandler("settings", self._settings_command))
 
     def _schedule_tasks(self):
-        # مهمات مجدولة
         self.scheduler.add_job(
             self._send_daily_summary,
-            trigger=CronTrigger(hour=16, timezone=Config.MARKET_TIMEZONE)  # 4PM توقيت السعودية
+            trigger=CronTrigger(hour=16, timezone=Config.MARKET_TIMEZONE)
         )
         self.scheduler.add_job(
             self._check_global_events,
@@ -76,40 +69,21 @@ class SaudiStockBot:
 
     def _handle_group_message(self, update: Update, context: CallbackContext):
         message_text = update.message.text.strip()
-        
-        # تصنيف المحتوى
-        content_type = classify_content(message_text)
-        
-        # معالجة رموز الأسهم
         if self._is_stock_symbol(message_text):
             self._process_stock_request(update, message_text)
-        elif content_type == 'global_event':
-            self._handle_global_event(update, message_text)
 
     def _is_stock_symbol(self, text):
         return text.isdigit() and 1000 <= int(text) <= 9999
 
     def _process_stock_request(self, update, symbol):
-        # منع التكرار
-        content_hash = self._generate_content_hash(symbol)
-        if is_duplicate(content_hash):
-            return
-            
-        # جلب البيانات
-        stock_data = self._fetch_stock_data(symbol)
-        
-        # إعداد الرسالة المخصبة
+        # Placeholder for processing stock request
+        stock_data = {'price': 100, 'change': 1.5, 'volume': 10000, 'recommendation': 'Buy', 'link': 'http://example.com'}
         formatted_msg = self._format_stock_message(symbol, stock_data)
-        
-        # إرسال الرسالة
         self._send_enriched_message(update.effective_chat.id, formatted_msg)
-        
-        # تسجيل في قاعدة البيانات
-        self._register_content(content_hash, 'stock_analysis')
 
     def _format_stock_message(self, symbol, data):
         return (
-            f"📊 *{symbol} - {data['name']}*\n\n"
+            f"📊 *{symbol} - Stock Name*\n\n"
             f"▫️ السعر الحالي: {data['price']} ريال\n"
             f"▫️ التغيير اليومي: {data['change']}%\n"
             f"▫️ حجم التداول: {data['volume']}\n\n"
@@ -119,60 +93,31 @@ class SaudiStockBot:
 
     def _send_daily_summary(self):
         logger.info("Executing _send_daily_summary task")
-        # إرسال تقرير يومي لجميع المجموعات
-        groups = db.session.query(GroupSettings).all()
-        for group in groups:
-            report = self._generate_daily_report()
-            self._send_enriched_message(group.chat_id, report)
+        # Placeholder for sending daily summary
+        pass
 
     def _check_global_events(self):
         logger.info("Executing _check_global_events task")
-        events = GlobalImpact.get_recent_events()
-        for event in events:
-            message = self._format_global_event(event)
-            groups = db.session.query(GroupSettings).filter_by(receive_global=True).all()
-            for group in groups:
-                self._send_enriched_message(group.chat_id, message)
-
-    def _generate_content_hash(self, text):
-        return hashlib.md5(text.encode()).hexdigest()
-
-    def _fetch_stock_data(self, symbol):
-        # هنا سيكون تنفيذ لجلب بيانات الأسهم
+        # Placeholder for checking global events
         pass
 
     def _send_enriched_message(self, chat_id, message):
-        # هنا سيكون تنفيذ لإرسال الرسالة المخصبة
+        # Placeholder for sending enriched message
         pass
 
-    def _handle_global_event(self, update, message):
-        # هنا سيكون تنفيذ لمعالجة الأحداث العالمية
-        pass
-
-    def _generate_daily_report(self):
-        # هنا سيكون تنفيذ لتوليد تقرير يومي
-        pass
-
-    def _format_global_event(self, event):
-        # هنا سيكون تنفيذ لتنسيق الأحداث العالمية
-        pass
-
-    def _register_content(self, hash, type):
-        # هنا سيكون تنفيذ لتسجيل المحتوى في قاعدة البيانات
-        pass
-
-    def _count_requests(self, user_id, time_window):
-        # هنا سيكون تنفيذ لحساب طلبات المستخدم ضمن نافذة زمنية
-        pass
-
-bot = SaudiStockBot()
+SaudiStockBot()
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     if request.method == "POST":
+        logger.info("Received a POST request on /webhook")
         update = Update.de_json(request.get_json(force=True), bot.application.bot)
         bot.application.process_update(update)
+        logger.info("Processed the update")
         return "ok", 200
+    else:
+        logger.warning("Received a non-POST request on /webhook")
+        return "Method Not Allowed", 405
 
 if __name__ == '__main__':
     # تعيين webhook
