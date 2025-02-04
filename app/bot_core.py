@@ -35,11 +35,12 @@ def _is_malicious_request(user_id):
 
 class SaudiStockBot:
     def __init__(self):
-        self.updater = Updater(Config.TELEGRAM_TOKEN, use_context=True)
+        # إزالة الوسيط use_context
+        self.updater = Updater(token=Config.TELEGRAM_TOKEN)
         self.scheduler = BackgroundScheduler()
         self._setup_handlers()
         self._schedule_tasks()
-        
+
     def _setup_handlers(self):
         dp = self.updater.dispatcher
         dp.add_handler(CommandHandler("start", self._start_command))
