@@ -4,7 +4,7 @@ import hashlib
 import yfinance as yf
 from datetime import datetime, timedelta
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, filters, CallbackContext
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackContext
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy import or_
 from flask import Flask
@@ -35,14 +35,14 @@ def _is_malicious_request(user_id):
 
 class SaudiStockBot:
     def __init__(self):
-        # إزالة الوسيط use_context
-        self.updater = Updater(token=Config.TELEGRAM_TOKEN)
+        # استخدام ApplicationBuilder بدلاً من Updater
+        self.application = ApplicationBuilder().token(Config.TELEGRAM_TOKEN).build()
         self.scheduler = BackgroundScheduler()
         self._setup_handlers()
         self._schedule_tasks()
 
     def _setup_handlers(self):
-        dp = self.updater.dispatcher
+        dp = self.application.dispatcher
         dp.add_handler(CommandHandler("start", self._start_command))
         dp.add_handler(MessageHandler(filters.TEXT & filters.ChatType.GROUP, self._handle_group_message))
         dp.add_handler(CommandHandler("settings", self._settings_command))
