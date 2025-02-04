@@ -69,6 +69,12 @@ class SaudiStockBot:
             "- تحليل فني مفصل\n- أخبار الشركة\n- تنبيهات السوق"
         )
 
+    def _settings_command(self, update: Update, context: CallbackContext):
+        update.message.reply_text(
+            "⚙️ *إعدادات البوت*\n\n"
+            "يمكنك تعديل إعدادات البوت هنا."
+        )
+
     def _handle_group_message(self, update: Update, context: CallbackContext):
         message_text = update.message.text.strip()
         
