@@ -11,6 +11,11 @@ from app.utils.config import Config
 from app.utils.content_filter import classify_content
 from app.utils.duplicate_checker import is_duplicate
 
+# تهيئة التطبيق
+app = Flask(__name__)
+app.config.from_object('app.utils.config.Config')
+db.init_app(app)
+
 class SaudiStockBot:
     def __init__(self):
         self.application = ApplicationBuilder().token(Config.TELEGRAM_TOKEN).build()
@@ -70,7 +75,8 @@ class SaudiStockBot:
         self._register_content(content_hash, 'stock_analysis')
 
     def _fetch_stock_data(self, symbol):
-        return pdr.get_data_yahoo(symbol)
+        # قم بتعديل هذه الدالة لتسترجع بيانات الأسهم بشكل صحيح
+        pass
 
     def _format_stock_message(self, symbol, data):
         # كود لتنسيق رسالة السهم
@@ -123,6 +129,6 @@ def index():
     return "Hello, this is the root endpoint. The bot is running.", 200
 
 if __name__ == '__main__':
-    webhook_url = f"https://stock1-d9081f321254.herokuapp.com/webhook"
+    webhook_url = f"https://{os.environ.get('HEROKU_APP_NAME')}.herokuapp.com/webhook"
     bot.application.bot.set_webhook(url=webhook_url)
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
