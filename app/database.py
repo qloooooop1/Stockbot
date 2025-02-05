@@ -1,11 +1,13 @@
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 db = SQLAlchemy()
 
-# إزالة أي استيراد لـ create_engine
-# from sqlalchemy import create_engine
-# engine = create_engine(...)
-
+# Rest of your code
+class GroupSettings(db.Model):
+    # Your existing code
+    last_active = db.Column(db.DateTime, default=datetime.now)
+    # Other columns and methods...
 class ContentRegistry(db.Model):
     __tablename__ = 'content_registry'
     id = db.Column(db.String(64), primary_key=True)
