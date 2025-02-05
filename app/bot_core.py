@@ -70,18 +70,22 @@ class SaudiStockBot:
         self._register_content(content_hash, 'stock_analysis')
 
     def _fetch_stock_data(self, symbol):
-        pass
+        return pdr.get_data_yahoo(symbol)
 
     def _format_stock_message(self, symbol, data):
+        # كود لتنسيق رسالة السهم
         pass
 
     def _send_enriched_message(self, chat_id, message):
+        # كود لإرسال رسالة مثرية
         pass
 
     def _generate_content_hash(self, text):
+        # كود لتوليد تجزئة المحتوى
         pass
 
     def _register_content(self, content_hash, content_type):
+        # كود لتسجيل المحتوى
         pass
 
     def _send_daily_summary(self):
@@ -96,9 +100,11 @@ class SaudiStockBot:
             self._notify_groups(event)
 
     def _generate_daily_report(self):
+        # كود لتوليد تقرير يومي
         pass
 
     def _notify_groups(self, event):
+        # كود لإخطار المجموعات
         pass
 
 bot = SaudiStockBot()
