@@ -1,8 +1,13 @@
-from datetime import datetime
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask
+from app.database import db
 
-db = SQLAlchemy()
+app = Flask(__name__)
+app.config.from_object('app.utils.config.Config')
 
+# تهيئة قاعدة البيانات
+db.init_app(app)
+
+# تأكد من عدم وجود أي استيراد لـ create_engine هنا
 class ContentRegistry(db.Model):
     __tablename__ = 'content_registry'
     id = db.Column(db.Integer, primary_key=True)
