@@ -3,11 +3,6 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-# Rest of your code
-class GroupSettings(db.Model):
-    # Your existing code
-    last_active = db.Column(db.DateTime, default=datetime.now)
-    # Other columns and methods...
 class ContentRegistry(db.Model):
     __tablename__ = 'content_registry'
     id = db.Column(db.String(64), primary_key=True)
