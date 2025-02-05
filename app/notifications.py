@@ -123,4 +123,5 @@ class NotificationManager:
         self._send_message(chat_id, report, parse_mode=ParseMode.HTML)
 
     def _send_message(self, chat_id, message, **kwargs):
+        # كود لإرسال رسالة
         pass
