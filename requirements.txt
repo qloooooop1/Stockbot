@@ -11,3 +11,4 @@ sqlalchemy==2.0.23
 requests==2.31.0
 psycopg2
 Flask-SQLAlchemy==3.0.2  # أو أحدث إصدار
+psycopg2-binary==2.9.9  # إضافة هذا السطر
