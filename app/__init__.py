@@ -1,14 +1,13 @@
 from flask import Flask
 from app.database import db
-from utils.config import Config
+from utils.config import Config  # تغيير المسار هنا
 
 app = Flask(__name__)
-app.config.from_object('app.utils.config.Config')
+app.config.from_object(Config)  # استخدام الكلاس مباشرةً
 
 # تهيئة قاعدة البيانات
 db.init_app(app)
 
-# تأكد من عدم وجود أي استيراد لـ create_engine هنا
 class ContentRegistry(db.Model):
     __tablename__ = 'content_registry'
     id = db.Column(db.Integer, primary_key=True)
@@ -19,12 +18,10 @@ def init_db(app):
         db.create_all()
 
 def create_app():
-    from flask import Flask
     app = Flask(__name__)
-    app.config.from_object('app.utils.config.Config')
+    app.config.from_object(Config)  # استخدام الكلاس مباشرةً
     db.init_app(app)
     
-    # Import modules after app initialization
     with app.app_context():
         from app import bot_core, market_data, notifications
 
