@@ -54,9 +54,11 @@ class ContentRegistry(db.Model):
     timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
     category = db.Column(db.String(50))
     source = db.Column(db.String(100))
+    content_type = db.Column(db.String(50))  # إضافة هذه الحقل لتطابق النموذج في bot_core.py
 
 # ملاحظات:
-# - تم التأكد من أن جميع الاستيرادات والإعدادات صحيحة.
+# - تم إضافة حقل `content_type` إلى نموذج `ContentRegistry` لتطابق النموذج في bot_core.py.
+# - تأكد من أن جميع الاستيرادات والإعدادات صحيحة.
 # - تم تصحيح استبدال 'postgres://' بـ 'postgresql://' في URI قاعدة البيانات لضمان التوافق مع Heroku.
 # - تأكد من أن ملفات الـ blueprint (bot_core, market_data, notifications) موجودة في المسارات المحددة وأنها تحتوي على تعريفات الصفحات الفرعية بشكل صحيح.
 # - تأكد من أن ملف config.py في مجلد utils يحتوي على إعدادات SQLALCHEMY_DATABASE_URI بشكل صحيح.
