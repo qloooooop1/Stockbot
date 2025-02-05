@@ -273,10 +273,10 @@ class SaudiStockBot:
 bot_instance = SaudiStockBot()
 
 @app.route('/webhook', methods=['POST'])
-def webhook_handler():
+async def webhook_handler():
     if request.method == 'POST':
         update = Update.de_json(request.json, bot_instance.application.bot)
-        bot_instance.application.process_update(update)
+        await bot_instance.application.process_update(update)
         return 'OK', 200
     return 'Method Not Allowed', 405
 
