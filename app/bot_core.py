@@ -248,7 +248,6 @@ class SaudiStockBot:
             groups = GroupSettings.query.filter_by(azkar=True).all()
             for group in groups:
                 try:
-                    # هنا يجب أن تقوم بجلب الأذكار من ملف Islamic_content.json
                     azkar = self._get_azkar()
                     Bot(token=Config.TELEGRAM_TOKEN).send_message(
                         chat_id=group.chat_id,
@@ -259,20 +258,19 @@ class SaudiStockBot:
                     logging.error(f"Azkar sending error for {group.chat_id}: {str(e)}")
 
     def _get_azkar(self):
-        # هذا مثال بسيط، يجب تنفيذه بناءً على محتوى Islamic_content.json
         import json
         with open('data/Islamic_content.json') as json_file:
             data = json.load(json_file)
             return data.get('azkar', "لا يوجد أذكار متاحة حالياً.")
 
     def _process_global_event(self, update: Update, msg_text: str):
-        # منطق معالجة الأحداث العالمية
+        # Logic for processing global events
         pass
 
 # Flask Routes
 bot_instance = SaudiStockBot()
 
-    @app.route('/webhook', methods=['POST'])
+@app.route('/webhook', methods=['POST'])
 async def webhook_handler():
     if request.method == 'POST':
         try:
