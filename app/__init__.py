@@ -1,5 +1,6 @@
 from flask import Flask
 from app.database import db
+from utils.config import Config
 
 app = Flask(__name__)
 app.config.from_object('app.utils.config.Config')
