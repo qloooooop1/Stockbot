@@ -2,7 +2,12 @@ import os
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 
+# استبدال أي استخدام لـ create_engine بـ:
 db = SQLAlchemy()
+
+# تأكد من إزالة أي أسطر تحتوي على:
+# from sqlalchemy import create_engine
+# engine = create_engine(...)
 
 class ContentRegistry(db.Model):
     __tablename__ = 'content_registry'
