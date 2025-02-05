@@ -1,45 +1,56 @@
-from flask import Flask
-from app.database import db
-from utils.config import Config  # تغيير المسار هنا
-from flask_sqlalchemy import SQLAlchemy
+# app/__init__.py
 import os
+import sys
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 
-# تهيئة الامتداد خارج دالة المصنع
+# إضافة المسار الجذري للنظام
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# تهيئة الامتدادات
 db = SQLAlchemy()
 
 def create_app():
     app = Flask(__name__)
     
-    # تحميل الإعدادات من الكلاس Config
+    # تحميل الإعدادات
     from utils.config import Config
     app.config.from_object(Config)
     
-    # إصلاح رابط PostgreSQL لـ Heroku (مهم!)
-    if app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgres://"):
-        app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace(
-            "postgres://", "postgresql://", 1
-        )
-
-    # تهيئة قاعدة البيانات مع التطبيق
+    # إصلاح رابط قاعدة البيانات لـ Heroku
+    _fix_postgresql_uri(app)
+    
+    # تهيئة الامتدادات
     db.init_app(app)
     
-    # تعريف النماذج داخل سياق التطبيق
+    # تسجيل الـ blueprints
+    _register_blueprints(app)
+    
+    # إنشاء الجداول
     with app.app_context():
-        # استيراد النماذج هنا لتجنب الاستيراد الدائري
-        from .bot_core import bot  # إذا كان هناك blueprint
-        from . import market_data, notifications
-        
-        # تسجيل الـ blueprints إذا وجدت
-        # app.register_blueprint(bot)
-        
-        # إنشاء الجداول إذا لم تكن موجودة
         db.create_all()
     
     return app
 
-# تعريف النموذج بعد تهيئة db
+def _fix_postgresql_uri(app):
+    uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    if uri.startswith("postgres://"):
+        app.config['SQLALCHEMY_DATABASE_URI'] = uri.replace("postgres://", "postgresql://", 1)
+
+def _register_blueprints(app):
+    from app.bot_core import bot_bp
+    from app.market_data import data_bp
+    from app.notifications import notif_bp
+    
+    app.register_blueprint(bot_bp)
+    app.register_blueprint(data_bp)
+    app.register_blueprint(notif_bp)
+
+# تعريف النماذج
 class ContentRegistry(db.Model):
     __tablename__ = 'content_registry'
     id = db.Column(db.Integer, primary_key=True)
     content_hash = db.Column(db.String(64), unique=True, nullable=False)
-    # ... (أضف بقية الحقول حسب الحاجة)
+    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
+    category = db.Column(db.String(50))
+    source = db.Column(db.String(100))
