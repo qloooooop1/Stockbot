@@ -1,13 +1,20 @@
-import os
-from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-
-# استبدال أي استخدام لـ create_engine بـ:
 db = SQLAlchemy()
 
-# تأكد من إزالة أي أسطر تحتوي على:
+# إزالة أي استيراد لـ create_engine
 # from sqlalchemy import create_engine
 # engine = create_engine(...)
+
+class ContentRegistry(db.Model):
+    __tablename__ = 'content_registry'
+    id = db.Column(db.String(64), primary_key=True)
+    content_type = db.Column(db.String(50))
+    first_sent = db.Column(db.DateTime)
+    last_sent = db.Column(db.DateTime)
+    sent_count = db.Column(db.Integer, default=1)
+    related_groups = db.Column(db.JSON)
+
+# (بقية تعريفات الجداول)
 
 class ContentRegistry(db.Model):
     __tablename__ = 'content_registry'
