@@ -1,4 +1,3 @@
-# utils/config.py
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -36,7 +35,7 @@ class Config:
     # ----------------------
     # إعدادات الجدولة الزمنية
     # ----------------------
-    MARKET_TIMEZONE = 'Asia/Riyadh'  # أُعيدت التسمية هنا
+    MARKET_TIMEZONE = 'Asia/Riyadh'
     MARKET_OPEN = '10:00'
     MARKET_CLOSE = '15:00'
     
@@ -71,7 +70,6 @@ class Config:
         'auth_token': os.getenv('ALJAZIRA_AUTH_TOKEN')
     }
     
-    
     # ----------------------
     # إعدادات الأداء
     # ----------------------
@@ -79,4 +77,16 @@ class Config:
         'max_threads': 4,
         'request_timeout': 15,
         'cache_ttl': 300
+    }
+
+    # ----------------------
+    # إعدادات البوت
+    # ----------------------
+    BOT_SETTINGS = {
+        'daily_summary': True,
+        'stock_analysis': True,
+        'global_events': True,
+        'azkar': True,
+        'remove_phone_numbers': True,
+        'remove_urls': True
     }
