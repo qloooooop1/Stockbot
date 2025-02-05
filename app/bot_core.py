@@ -8,9 +8,9 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from app.database import db, ContentRegistry, GlobalImpact, GroupSettings
-from app.utils.config import Config
-from app.utils.content_filter import classify_content
-from app.utils.duplicate_checker import is_duplicate
+from utils.config import Config
+from utils.content_filter import classify_content
+from utils.duplicate_checker import is_duplicate
 
 # تهيئة التطبيق
 app = Flask(__name__)
