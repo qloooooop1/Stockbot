@@ -1,40 +1,40 @@
+# utils/config.py
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
 
 load_dotenv()
 
 class Config:
+    # إعدادات أساسية
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-key-123')
+    
     # إعدادات قاعدة البيانات
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///default.db')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///default.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # إعدادات أخرى حسب الحاجة
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-key-123')
-    
-class Config:
-    # إعدادات تليجرام
+    # إعدادات التليجرام
     TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-    ADMIN_IDS = os.getenv('ADMIN_IDS', '').split(',')
+    ADMIN_IDS = [int(x) for x in os.getenv('ADMIN_IDS', '').split(',') if x]
     
-    # إعدادات التصنيف
+    # تصنيف المحتوى
     CONTENT_CATEGORIES = {
-        'stock_analysis': ['رمز السهم', 'تحليل', 'توصية'],
-        'market_news': ['أرباح', 'اندماج', 'توزيعات'],
-        'global_event': ['نفط', 'الفيدرالي', 'العملات']
+        'technical_analysis': ['دعم', 'مقاومة', 'اتجاه'],
+        'fundamental_news': ['أرباح', 'توزيعات', 'اندماج'],
+        'market_sentiment': ['تفاؤل', 'تشاؤم', 'حيادية']
     }
     
     # إعدادات التكرار
     DUPLICATION_RULES = {
         'time_window': timedelta(hours=6),
-        'allowed_repeats': 2
+        'similarity_threshold': 0.85
     }
     
     # مصادر البيانات
-    TADAWUL_API_URL = "https://api.tadawul.com.sa/v1/"
-    GLOBAL_NEWS_API = os.getenv('GLOBAL_NEWS_ENDPOINT')
+    TADAWUL_API_URL = "https://api.tadawul.com.sa/v2/market-data"
+    ALJAZIRA_NEWS_ENDPOINT = os.getenv('ALJAZIRA_NEWS_URL')
     
     # إعدادات الوقت
-    MARKET_TIMEZONE = 'Asia/Riyadh'
-    REPORT_FREQUENCY = os.getenv('REPORT_FREQUENCY', 'daily')
+    MARKET_OPEN_TIME = '10:00'
+    MARKET_CLOSE_TIME = '15:00'
+    TIMEZONE = 'Asia/Riyadh'
