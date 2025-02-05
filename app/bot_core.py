@@ -272,12 +272,16 @@ class SaudiStockBot:
 # Flask Routes
 bot_instance = SaudiStockBot()
 
-@app.route('/webhook', methods=['POST'])
+    @app.route('/webhook', methods=['POST'])
 async def webhook_handler():
     if request.method == 'POST':
-        update = Update.de_json(request.json, bot_instance.application.bot)
-        await bot_instance.application.process_update(update)
-        return 'OK', 200
+        try:
+            update = Update.de_json(request.json, bot_instance.application.bot)
+            await bot_instance.application.process_update(update)
+            return 'OK', 200
+        except Exception as e:
+            logging.error(f"Webhook error: {str(e)}")
+            return 'Error', 500
     return 'Method Not Allowed', 405
 
 @app.route('/', methods=['POST'])
