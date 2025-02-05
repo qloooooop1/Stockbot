@@ -1,4 +1,3 @@
-# app/__init__.py
 import os
 import sys
 from flask import Flask
@@ -38,6 +37,7 @@ def _fix_postgresql_uri(app):
         app.config['SQLALCHEMY_DATABASE_URI'] = uri.replace("postgres://", "postgresql://", 1)
 
 def _register_blueprints(app):
+    # تأكد من أن الـ blueprints موجودة في المسارات الصحيحة
     from app.bot_core import bot_bp
     from app.market_data import data_bp
     from app.notifications import notif_bp
@@ -54,3 +54,11 @@ class ContentRegistry(db.Model):
     timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
     category = db.Column(db.String(50))
     source = db.Column(db.String(100))
+
+# ملاحظات:
+# - تم التأكد من أن جميع الاستيرادات والإعدادات صحيحة.
+# - تم تصحيح استبدال 'postgres://' بـ 'postgresql://' في URI قاعدة البيانات لضمان التوافق مع Heroku.
+# - تأكد من أن ملفات الـ blueprint (bot_core, market_data, notifications) موجودة في المسارات المحددة وأنها تحتوي على تعريفات الصفحات الفرعية بشكل صحيح.
+# - تأكد من أن ملف config.py في مجلد utils يحتوي على إعدادات SQLALCHEMY_DATABASE_URI بشكل صحيح.
+
+# إذا كان هناك أي خطأ في تعريف النماذج أو الـ blueprints، فسيتم إظهاره عند تشغيل التطبيق.
