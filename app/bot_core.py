@@ -11,22 +11,18 @@ from apscheduler.triggers.cron import CronTrigger
 from utils.config import Config
 from utils.content_filter import classify_content
 from utils.duplicate_checker import is_duplicate
+import asyncio
+import re
 
-# ---------------------------
-# Flask Application Setup
-# ---------------------------
+# تعريف لوحة التحكم
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# ---------------------------
-# Database Configuration
-# ---------------------------
+# تهيئة قاعدة البيانات
 db = SQLAlchemy()
 db.init_app(app)
 
-# ---------------------------
-# Database Models
-# ---------------------------
+# تعريف النماذج
 class ContentRegistry(db.Model):
     __tablename__ = 'content_registry'
     id = db.Column(db.Integer, primary_key=True)
@@ -46,18 +42,21 @@ class GroupSettings(db.Model):
     __tablename__ = 'group_settings'
     id = db.Column(db.Integer, primary_key=True)
     chat_id = db.Column(db.String(50), unique=True)
-    notification_prefs = db.Column(db.String(200))
+    daily_summary = db.Column(db.Boolean, default=True)
+    stock_analysis = db.Column(db.Boolean, default=True)
+    global_events = db.Column(db.Boolean, default=True)
+    azkar = db.Column(db.Boolean, default=True)
+    remove_phone_numbers = db.Column(db.Boolean, default=True)
+    remove_urls = db.Column(db.Boolean, default=True)
 
-# ---------------------------
-# Bot Core Functionality
-# ---------------------------
+# تعريف كلاس SaudiStockBot
 class SaudiStockBot:
     def __init__(self):
         self.application = ApplicationBuilder().token(Config.TELEGRAM_TOKEN).build()
         self.scheduler = BackgroundScheduler(daemon=True)
         self._setup_handlers()
         self._schedule_jobs()
-        self._init_webhook()
+        asyncio.run(self._init_webhook())
 
     def _setup_handlers(self):
         handlers = [
@@ -81,15 +80,21 @@ class SaudiStockBot:
             trigger='interval',
             hours=2
         )
+        self.scheduler.add_job(
+            self._send_azkar,
+            trigger=CronTrigger(
+                hour=5,  # بناءً على الوقت المناسب للأذكار
+                minute=0,
+                timezone=Config.MARKET_TIMEZONE
+            )
+        )
         self.scheduler.start()
 
-    def _init_webhook(self):
+    async def _init_webhook(self):
         webhook_url = f"https://{os.getenv('HEROKU_APP_NAME')}.herokuapp.com/webhook"
-        self.application.bot.set_webhook(webhook_url)
+        await self.application.bot.set_webhook(webhook_url)
 
-    # ------------
     # Command Handlers
-    # ------------
     def _handle_start(self, update: Update, context: CallbackContext):
         welcome_msg = """📈 *مرحبًا بكم في بوت الأسهم السعودية الذكي* 
         
@@ -103,22 +108,40 @@ class SaudiStockBot:
         )
 
     def _handle_settings(self, update: Update, context: CallbackContext):
-        settings_menu = """⚙️ *إعدادات البوت*
+        settings = self._get_group_settings(update.effective_chat.id)
+        settings_menu = f"""⚙️ *إعدادات البوت*
         
-1. تفعيل التنبيهات اليومية
-2. ضبط مستوى التحليل
-3. إدارة القنوات المفضلة"""
+1. التنبيهات اليومية: {'✅' if settings.daily_summary else '❌'}
+2. التحليل الفني: {'✅' if settings.stock_analysis else '❌'}
+3. الأحداث العالمية: {'✅' if settings.global_events else '❌'}
+4. الأذكار: {'✅' if settings.azkar else '❌'}
+5. حذف أرقام الهواتف: {'✅' if settings.remove_phone_numbers else '❌'}
+6. حذف المواقع: {'✅' if settings.remove_urls else '❌'}
+
+استخدم /set<رقم> on/off لتغيير الإعداد (مثال: /set1 off)"""
         update.message.reply_text(settings_menu, parse_mode='Markdown')
 
-    # ------------
-    # Message Processing
-    # ------------
+    def _get_group_settings(self, chat_id):
+        with app.app_context():
+            settings = GroupSettings.query.filter_by(chat_id=str(chat_id)).first()
+            if not settings:
+                settings = GroupSettings(chat_id=str(chat_id))
+                db.session.add(settings)
+                db.session.commit()
+            return settings
+
     def _handle_group_message(self, update: Update, context: CallbackContext):
         msg_text = update.message.text.strip()
+        settings = self._get_group_settings(update.effective_chat.id)
         
-        if self._is_valid_stock_symbol(msg_text):
+        if settings.remove_phone_numbers:
+            msg_text = re.sub(r'\b\d{9,15}\b', '[رقم محذوف]', msg_text)
+        if settings.remove_urls:
+            msg_text = re.sub(r'http\S+', '[رابط محذوف]', msg_text)
+        
+        if self._is_valid_stock_symbol(msg_text) and settings.stock_analysis:
             self._process_stock_request(update, msg_text)
-        else:
+        elif settings.global_events:
             content_type = classify_content(msg_text)
             if content_type == 'global_event':
                 self._process_global_event(update, msg_text)
@@ -167,12 +190,10 @@ class SaudiStockBot:
             db.session.add(new_entry)
             db.session.commit()
 
-    # ------------
     # Scheduled Tasks
-    # ------------
     def _send_market_summary(self):
         with app.app_context():
-            groups = GroupSettings.query.all()
+            groups = GroupSettings.query.filter_by(daily_summary=True).all()
             for group in groups:
                 try:
                     report = self._generate_daily_report()
@@ -195,14 +216,15 @@ class SaudiStockBot:
 
     def _monitor_global_events(self):
         with app.app_context():
+            groups = GroupSettings.query.filter_by(global_events=True).all()
             events = GlobalImpact.query.filter(
                 GlobalImpact.detected_at >= datetime.utcnow() - timedelta(hours=6)
             ).all()
             
             for event in events:
-                self._broadcast_event(event)
+                self._broadcast_event(event, groups)
 
-    def _broadcast_event(self, event: GlobalImpact):
+    def _broadcast_event(self, event: GlobalImpact, groups):
         event_msg = f"""
 🌍 *حدث عالمي مؤثر*
         
@@ -211,21 +233,43 @@ class SaudiStockBot:
 المستوى: {event.severity}
         """
         
+        for group in groups:
+            try:
+                Bot(token=Config.TELEGRAM_TOKEN).send_message(
+                    chat_id=group.chat_id,
+                    text=event_msg.strip(),
+                    parse_mode='Markdown'
+                )
+            except Exception as e:
+                logging.error(f"Event broadcast error for {group.chat_id}: {str(e)}")
+
+    def _send_azkar(self):
         with app.app_context():
-            groups = GroupSettings.query.all()
+            groups = GroupSettings.query.filter_by(azkar=True).all()
             for group in groups:
                 try:
+                    # هنا يجب أن تقوم بجلب الأذكار من ملف Islamic_content.json
+                    azkar = self._get_azkar()
                     Bot(token=Config.TELEGRAM_TOKEN).send_message(
                         chat_id=group.chat_id,
-                        text=event_msg.strip(),
+                        text=azkar,
                         parse_mode='Markdown'
                     )
                 except Exception as e:
-                    logging.error(f"Event broadcast error: {str(e)}")
+                    logging.error(f"Azkar sending error for {group.chat_id}: {str(e)}")
 
-# ---------------------------
+    def _get_azkar(self):
+        # هذا مثال بسيط، يجب تنفيذه بناءً على محتوى Islamic_content.json
+        import json
+        with open('data/Islamic_content.json') as json_file:
+            data = json.load(json_file)
+            return data.get('azkar', "لا يوجد أذكار متاحة حالياً.")
+
+    def _process_global_event(self, update: Update, msg_text: str):
+        # منطق معالجة الأحداث العالمية
+        pass
+
 # Flask Routes
-# ---------------------------
 bot_instance = SaudiStockBot()
 
 @app.route('/webhook', methods=['POST'])
@@ -236,13 +280,15 @@ def webhook_handler():
         return 'OK', 200
     return 'Method Not Allowed', 405
 
+@app.route('/', methods=['POST'])
+def handle_root_post():
+    return 'POST received at root', 200
+
 @app.route('/health')
 def health_check():
     return 'Bot Operational', 200
 
-# ---------------------------
 # Application Initialization
-# ---------------------------
 with app.app_context():
     db.create_all()
 
